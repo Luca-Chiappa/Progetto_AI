@@ -79,13 +79,21 @@ st.subheader("🔮 Previsione Trend Futuri (2025-2030)")
 
 # 1. Prepariamo i dati per il modello
 # Usiamo i dati filtrati dall'utente (df_filtered)
-if not df_filtered.empty:
+genres_prediction = st.multiselect(
+    "Genres_prediction",
+    df.genre.unique(),
+    ["Action", "Adventure"],
+)
+# years = st.slider("Years_prediction", 1986, 2006, (2000, 2016))
+
+df_prevision = df[(df["genre"].isin(genres_prediction)) & (df["year"].between(years[0], years[1]))]
+if not df_prevision.empty:
     future_years = np.array(range(2025, 2031)).reshape(-1, 1)
     prediction_list = []
 
-    for genre in genres:
+    for genre in genres_prediction:
         # Filtriamo per singolo genere
-        genre_data = df_filtered[df_filtered['genre'] == genre].groupby('year')['gross'].sum().reset_index()
+        genre_data = df_prevision[df_prevision['genre'] == genre].groupby('year')['gross'].sum().reset_index()
         
         if len(genre_data) > 1: # Servono almeno 2 punti per una linea
             X = genre_data[['year']].values
@@ -103,7 +111,7 @@ if not df_filtered.empty:
                 prediction_list.append({"year": yr, "genre": genre, "gross": max(0, p), "type": "Previsione"})
 
     # 2. Uniamo i dati storici con le previsioni per il confronto
-    df_historical = df_filtered[['year', 'genre', 'gross']].copy()
+    df_historical = df_prevision[['year', 'genre', 'gross']].copy()
     df_historical['type'] = 'Storico'
     
     df_predictions = pd.DataFrame(prediction_list)
