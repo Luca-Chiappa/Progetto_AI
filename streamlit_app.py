@@ -119,6 +119,17 @@ if not df_prevision.empty:
 
     # 3. Visualizzazione Grafica con Altair
     # Usiamo il tratteggio per distinguere le previsioni
+    years_prediction = st.slider("Years_prediction", 1986, 2030, (2000, 2030))
+    df_reshaped = df_predictions.pivot_table(
+        index="year", columns="genre", values="gross", aggfunc="sum", fill_value=0
+    )
+    df_reshaped = df_reshaped.sort_values(by="year", ascending=False)
+
+
+    # Display the data as a table using `st.dataframe`.
+    df_final = pd.melt(
+    df_reshaped.reset_index(), id_vars="year", var_name="genre", value_name="gross"
+    )
     forecast_chart = (
         alt.Chart(df_final)
         .mark_line()
