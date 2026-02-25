@@ -2,7 +2,6 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-# Show the page title and description.
 st.set_page_config(page_title="Movies dataset", page_icon="🎬")
 st.title("🎬 Movies dataset")
 st.write(
@@ -64,3 +63,10 @@ chart = (
     .properties(height=320)
 )
 st.altair_chart(chart, use_container_width=True)
+
+st.write(
+    """
+    Utilizzando i dati a disposizione come fonte, possiamo fare delle previsioni sulle tendenze 
+    future degli incassi cinematografici
+    """
+)
