@@ -1,6 +1,8 @@
 import altair as alt
 import pandas as pd
 import streamlit as st
+from sklearn.linear_model import LinearRegression
+import numpy as np
 
 st.set_page_config(page_title="Movies dataset", page_icon="🎬")
 st.title("🎬 Movies dataset")
@@ -70,3 +72,69 @@ st.write(
     future degli incassi cinematografici
     """
 )
+
+
+st.divider()
+st.subheader("🔮 Previsione Trend Futuri (2025-2030)")
+
+# 1. Prepariamo i dati per il modello
+# Usiamo i dati filtrati dall'utente (df_filtered)
+if not df_filtered.empty:
+    future_years = np.array(range(2025, 2031)).reshape(-1, 1)
+    prediction_list = []
+
+    for genre in genres:
+        # Filtriamo per singolo genere
+        genre_data = df_filtered[df_filtered['genre'] == genre].groupby('year')['gross'].sum().reset_index()
+        
+        if len(genre_data) > 1: # Servono almeno 2 punti per una linea
+            X = genre_data[['year']].values
+            y = genre_data['gross'].values
+            
+            # Creiamo e addestriamo il modello (Regressione Lineare)
+            model = LinearRegression()
+            model.fit(X, y)
+            
+            # Prediciamo il futuro
+            preds = model.predict(future_years)
+            
+            # Salviamo i risultati
+            for yr, p in zip(future_years.flatten(), preds):
+                prediction_list.append({"year": yr, "genre": genre, "gross": max(0, p), "type": "Previsione"})
+
+    # 2. Uniamo i dati storici con le previsioni per il confronto
+    df_historical = df_filtered[['year', 'genre', 'gross']].copy()
+    df_historical['type'] = 'Storico'
+    
+    df_predictions = pd.DataFrame(prediction_list)
+    df_final = pd.concat([df_historical, df_predictions])
+
+    # 3. Visualizzazione Grafica con Altair
+    # Usiamo il tratteggio per distinguere le previsioni
+    forecast_chart = (
+        alt.Chart(df_final)
+        .mark_line()
+        .encode(
+            x=alt.X("year:N", title="Anno"),
+            y=alt.Y("gross:Q", title="Incassi Stimati ($)"),
+            color="genre:N",
+            strokeDash=alt.condition(
+                alt.datum.type == 'Previsione', 
+                alt.value([5, 5]),  # Linea tratteggiata per il futuro
+                alt.value([0])      # Linea continua per il passato
+            )
+        )
+        .properties(height=400)
+    )
+    
+    st.altair_chart(forecast_chart, use_container_width=True)
+    
+    # 4. Verdetto finale
+    if prediction_list:
+        latest_preds = df_predictions[df_predictions['year'] == 2030]
+        winner = latest_preds.loc[latest_preds['gross'].idxmax(), 'genre']
+        st.success(f"Basandosi sui trend attuali, il genere più redditizio nel 2030 sarà: **{winner}**")
+else:
+    st.warning("Seleziona almeno un genere e un intervallo di anni per generare la previsione.")
+
+
