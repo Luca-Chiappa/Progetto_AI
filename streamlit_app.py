@@ -75,74 +75,73 @@ st.write(
 
 
 st.divider()
-st.subheader("🔮 Previsione Trend Futuri (2025-2030)")
+st.subheader("🔮 Previsione Trend Futuri (2017 - 2030)")
 
-# 1. Prepariamo i dati per il modello
-# Usiamo i dati filtrati dall'utente (df_filtered)
-genres_prediction = st.multiselect(
-    "Genres_prediction",
-    df.genre.unique(),
-    ["Action", "Adventure"],
-)
-# years = st.slider("Years_prediction", 1986, 2006, (2000, 2016))
+# 1. Definiamo l'intervallo futuro (dal 2017 al 2030)
+future_years = np.array(range(2017, 2031)).reshape(-1, 1)
 
-df_prevision = df[(df["genre"].isin(genres_prediction)) & (df["year"].between(years[0], years[1]))]
-if not df_prevision.empty:
-    future_years = np.array(range(2025, 2031)).reshape(-1, 1)
+if not df_filtered.empty:
     prediction_list = []
 
-    for genre in genres_prediction:
-        # Filtriamo per singolo genere
-        genre_data = df_prevision[df_prevision['genre'] == genre].groupby('year')['gross'].sum().reset_index()
+    for genre in genres:
+        # Otteniamo i dati storici filtrati per quel genere
+        genre_data = df_filtered[df_filtered['genre'] == genre].groupby('year')['gross'].sum().reset_index()
         
-        if len(genre_data) > 1: # Servono almeno 2 punti per una linea
+        # Il modello ha bisogno di almeno due punti storici per tracciare una linea
+        if len(genre_data) >= 2:
             X = genre_data[['year']].values
             y = genre_data['gross'].values
             
-            # Creiamo e addestriamo il modello (Regressione Lineare)
+            # Allenamento del modello
             model = LinearRegression()
             model.fit(X, y)
             
-            # Prediciamo il futuro
+            # Predizione per il periodo 2017-2030
             preds = model.predict(future_years)
             
-            # Salviamo i risultati
             for yr, p in zip(future_years.flatten(), preds):
-                prediction_list.append({"year": yr, "genre": genre, "gross": max(0, p), "type": "Previsione"})
+                # max(0, p) impedisce incassi negativi se il trend è in forte calo
+                prediction_list.append({"year": int(yr), "genre": genre, "gross": max(0, p), "type": "Previsione"})
 
-    # 2. Uniamo i dati storici con le previsioni per il confronto
-    df_historical = df_prevision[['year', 'genre', 'gross']].copy()
+    # 2. Prepariamo i dati per il grafico unico
+    df_historical = df_filtered[['year', 'genre', 'gross']].copy()
     df_historical['type'] = 'Storico'
     
     df_predictions = pd.DataFrame(prediction_list)
-    df_final = pd.concat([df_historical, df_predictions])
+    
+    # Uniamo passato e futuro
+    df_final = pd.concat([df_historical, df_predictions]).sort_values('year')
 
-    # 3. Visualizzazione Grafica con Altair
-    # Usiamo il tratteggio per distinguere le previsioni
+    # 3. Creazione del Grafico Altair
     forecast_chart = (
         alt.Chart(df_final)
-        .mark_line()
+        .mark_line(point=True) # Aggiungiamo i punti per chiarezza
         .encode(
-            x=alt.X("year:N", title="Anno"),
-            y=alt.Y("gross:Q", title="Incassi Stimati ($)"),
+            x=alt.X("year:O", title="Anno"), # :O tratta l'anno come ordinale (senza virgole)
+            y=alt.Y("gross:Q", title="Incassi ($)"),
             color="genre:N",
             strokeDash=alt.condition(
                 alt.datum.type == 'Previsione', 
-                alt.value([5, 5]),  # Linea tratteggiata per il futuro
-                alt.value([0])      # Linea continua per il passato
-            )
+                alt.value([5, 5]), # Tratteggio per il futuro
+                alt.value([0])     # Linea continua per il passato
+            ),
+            tooltip=["year", "genre", "gross", "type"]
         )
-        .properties(height=400)
+        .properties(height=450)
+        .interactive() # Permette zoom e spostamento
     )
     
     st.altair_chart(forecast_chart, use_container_width=True)
-    
-    # 4. Verdetto finale
-    if prediction_list:
-        latest_preds = df_predictions[df_predictions['year'] == 2030]
-        winner = latest_preds.loc[latest_preds['gross'].idxmax(), 'genre']
-        st.success(f"Basandosi sui trend attuali, il genere più redditizio nel 2030 sarà: **{winner}**")
+
+    # 4. Analisi dei risultati
+    if not df_predictions.empty:
+        # Troviamo il vincitore nell'ultimo anno (2030)
+        last_year_preds = df_predictions[df_predictions['year'] == 2030]
+        winner = last_year_preds.loc[last_year_preds['gross'].idxmax()]
+        
+        st.success(f"🏆 Il genere che dominerà il mercato nel **2030** sarà **{winner['genre']}** con un incasso stimato di **${winner['gross']:,.2f}**")
+        
+        with st.expander("Vedi i dati grezzi delle previsioni"):
+            st.dataframe(df_predictions.pivot(index='year', columns='genre', values='gross'))
 else:
-    st.warning("Seleziona almeno un genere e un intervallo di anni per generare la previsione.")
-
-
+    st.info("Seleziona i generi e l'intervallo temporale per generare la proiezione dal 2017 in poi.")
