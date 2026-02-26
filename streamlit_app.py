@@ -109,7 +109,7 @@ df_chart = pd.melt(
 )
 chart = (
     alt.Chart(df_chart)
-    .mark_line()
+    .mark_line(point=True)
     .encode(
         x=alt.X("year:O", title="Year"),
         y=alt.Y("gross:Q", title="Gross earnings ($)"),
@@ -198,7 +198,7 @@ if not df_prevision.empty:
             ),
             tooltip=["year", "genre", "gross", "type"]
         )
-        .properties(height=450)
+        .properties(height=320)
         .interactive() # Permette zoom e spostamento
     )
     
@@ -207,7 +207,8 @@ if not df_prevision.empty:
     # 4. Analisi dei risultati
     if not df_predictions.empty:
         # Troviamo il vincitore nell'ultimo anno (2030)
-        last_year_preds = df_predictions[df_predictions['year'] == 2030]
+        max_year = df_predictions["year"].max()
+        last_year_preds = df_predictions[df_predictions['year'] == max_year]
         winner = last_year_preds.loc[last_year_preds['gross'].idxmax()]
         
         st.success(f"🏆 Il genere che dominerà il mercato nel **2030** sarà **{winner['genre']}** con un incasso stimato di **${winner['gross']:,.2f}**")
