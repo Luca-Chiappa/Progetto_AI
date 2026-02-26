@@ -4,8 +4,8 @@ import streamlit as st
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
-def show_cinema():
-    @st.write(
+def show_libri():
+    st.write(
         """
         Quest'app analizza i dati storici degli incassi e delle valutazione di ogni genere di {modalita}]
         """
@@ -14,7 +14,7 @@ def show_cinema():
     # PRIMA PARTE - ANALISI DEI DATI
     @st.cache_data
     def load_data():
-        df = pd.read_csv("data/movies_genres_summary.csv")
+        df = pd.read_csv("data/books_genres_summary.csv")
         return df
 
     df = load_data()
@@ -22,7 +22,7 @@ def show_cinema():
     genres = st.multiselect(
         "Genres",
         df.genre.unique(),
-        ["Action", "Adventure", "Biography", "Comedy", "Drama", "Horror"],
+        ["Thriller", "Drama", "Horror"],
     )
 
     years = st.slider("Years", 1986, 2006, (2000, 2016))
