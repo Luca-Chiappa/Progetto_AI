@@ -4,6 +4,7 @@ import streamlit as st
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
+
 st.set_page_config(page_title="DatasetView", page_icon="🎬")
 st.title("🎬 DatasetView 📗" )
 
@@ -174,6 +175,11 @@ if not df_prevision.empty:
 else:
     st.info("Seleziona i generi e l'intervallo temporale per generare la proiezione dal 2017 in poi.")
 
+df = pd.read_csv("/workspaces/Progetto_AI/data/books_genres_summary.csv")
+
+if "chat_open" not in st.session_state:
+    st.session_state.chat_open = False
+
 st.markdown("""
 <style>
 .red-round-btn {
@@ -200,6 +206,31 @@ clicked = st.button("🤖", key="robot_btn")
 
 if clicked:
     st.session_state.chat_open = not st.session_state.chat_open
+
+def richiesta(domanda, df):
+    q = domanda.lower()
+    anno = None
+    for y in range(1800, 2030):
+        if str(y) in q:
+            anno = y
+            break
+
+    if "autore" in q and ("più letto" in q or "più popolare" in q or "più famoso" in q):
+        if anno is None:
+            return "Dimmi anche l'anno."
+        df_year = df[df["original_publication_year"] == float(anno)]
+        if df_year.empty:
+            return f"Non ho dati per l'anno {anno}."
+        top_author = df_year.groupby("authors")["ratings_count"].sum().idxmax()
+        return f"Nel {anno}, l'autore più letto è stato: **{top_author}**."
+
+    return "Non ho capito la domanda, prova a riformularla."
+
+if st.session_state.chat_open:
+    st.subheader("Chatbot")
+    domanda = st.text_input("Fai una domanda sul dataset:")
+    if domanda:
+        st.write(richiesta(domanda, df))
 
 
 
