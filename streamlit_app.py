@@ -90,15 +90,15 @@ else:
 df_prevision = df[(df["genre"].isin(genres_prediction))]
 
 if not df_prevision.empty:
-    future_years = np.array(range(2017, 2030)).reshape(-1, 1)
+    future_years = np.array(range(2016, 2030)).reshape(-1, 1)
     prediction_list = []
 
-    for genre in genres:
+    for genre in genres_prediction:
         # Otteniamo i dati storici filtrati per quel genere
-        genre_data = df_filtered[df_filtered['genre'] == genre].groupby('year')['gross'].sum().reset_index()
+        genre_data = df_prevision[df_prevision['genre'] == genre].groupby('year')['gross'].sum().reset_index()
         
         # Il modello ha bisogno di almeno due punti storici per tracciare una linea
-        if len(genre_data) >= 2:
+        if len(genre_data) >1:
             X = genre_data[['year']].values
             y = genre_data['gross'].values
             
@@ -111,16 +111,19 @@ if not df_prevision.empty:
             
             for yr, p in zip(future_years.flatten(), preds):
                 # max(0, p) impedisce incassi negativi se il trend è in forte calo
-                prediction_list.append({"year": int(yr), "genre": genre, "gross": max(0, p), "type": "Previsione"})
+                prediction_list.append({"year": int(yr), 
+                                        "genre": genre, 
+                                        "gross": max(0, p), 
+                                        "type": "Previsione"})
 
     # 2. Prepariamo i dati per il grafico unico
-    df_historical = df_filtered[['year', 'genre', 'gross']].copy()
+    df_historical = df_prevision[['year', 'genre', 'gross']].copy()
     df_historical['type'] = 'Storico'
     
     df_predictions = pd.DataFrame(prediction_list)
     df_all_data = pd.concat([df_historical, df_predictions])
 
-    df_final = df_all_data[df_all_data["year"].between(years_viz[0], years_viz[1])]
+    df_final = df_all_data[df_all_data["year"].between(years_viz[0], years_viz[1])].sort_values(by="year")
     
     forecast_chart = (
         alt.Chart(df_final)
@@ -145,16 +148,13 @@ if not df_prevision.empty:
     # 4. Analisi dei risultati
     if not df_predictions.empty:
         # Troviamo il vincitore nell'ultimo anno (2030)
-        last_year_preds = df_predictions[df_predictions['year'] == 2030]
-        winner = last_year_preds.loc[last_year_preds['gross'].idxmax()]
+        last_year_preds = df_predictions[df_predictions['year'] == 2029]
+        winner_row = last_year_preds.loc[last_year_preds['gross'].idxmax()]
         
-        st.success(f"🏆 Il genere che dominerà il mercato nel **2030** sarà **{winner['genre']}** con un incasso stimato di **${winner['gross']:,.2f}**")
+        nome_genere = winner_row['genre']
+        valore_gross = winner_row['gross']
         
-        with st.expander("Vedi i dati grezzi delle previsioni"):
-            st.dataframe(df_predictions.pivot(index='year', columns='genre', values='gross'))
+        st.success(f"🏆 Il genere che dominerà il mercato nel **2030** sarà **{nome_genere}** con un incasso stimato di **${valore_gross:,.2f}**")
+        
 else:
     st.info("Seleziona i generi e l'intervallo temporale per generare la proiezione dal 2017 in poi.")
-
-st.write(
-    """ Predizione degli incassi per ogni genere"""
-)
