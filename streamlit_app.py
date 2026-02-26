@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 from sklearn.linear_model import LinearRegression
 import numpy as np
+import ast
 
 st.set_page_config(page_title="Movies dataset", page_icon="🎬")
 st.title("🎬 Movies dataset")
@@ -14,9 +15,12 @@ st.write(
     """
 )
 
+df = pd.read_csv("/workspaces/Progetto_AI/data/tmdb_5000_movies.csv")
+df["year"] = pd.to_datetime(df["release_date"], errors="coerce").dt.year
+df["genres"] = df["genres"].apply(lambda x: [g["name"] for g in ast.literal_eval(x)])
+
 if "chat_open" not in st.session_state:
     st.session_state.chat_open = False
-
 
 st.markdown("""
 <style>
@@ -47,9 +51,8 @@ if clicked:
 
 def richiesta(domanda, df):
     q = domanda.lower()
-
     anno = None
-    for y in range(1986, 2016):
+    for y in range(1980, 2030):
         if str(y) in q:
             anno = y
             break
@@ -57,22 +60,21 @@ def richiesta(domanda, df):
     if "genere" in q and ("più visto" in q or "più guardato" in q or "popolare" in q):
         if anno is None:
             return "Dimmi anche l'anno, così posso cercare il genere più guardato."
-        
         df_year = df[df["year"] == anno]
         if df_year.empty:
             return f"Non ho dati per l'anno {anno}."
-
-        top_genre = df_year.groupby("genre")["views"].sum().idxmax()
-        return f"Nel {anno}, il genere più guardato è stato: **{top_genre}**."
+        exploded = df_year.explode("genres")
+        top_genre = exploded.groupby("genres")["popularity"].sum().idxmax()
+        return f"Nel {anno}, il genere più popolare è stato: **{top_genre}**."
 
     return "Non ho capito la domanda, prova a riformularla."
-
 
 if st.session_state.chat_open:
     st.subheader("Chatbot")
     domanda = st.text_input("Fai una domanda sul dataset:")
     if domanda:
-        st.write(richiesta(domanda, df))   
+        st.write(richiesta(domanda, df))
+ 
 
 # PRIMA PARTE - ANALISI DEI DATI
 @st.cache_data
