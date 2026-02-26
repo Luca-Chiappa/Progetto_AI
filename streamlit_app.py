@@ -156,6 +156,10 @@ else:
     st.info("Seleziona i generi e l'intervallo temporale per generare la proiezione dal 2017 in poi.")
 
 
+if "chat_open" not in st.session_state:
+    st.session_state.chat_open = False
+
+
 st.markdown("""
 <style>
 .red-round-btn {
@@ -181,6 +185,13 @@ st.markdown("""
 clicked = st.button("🤖", key="robot_btn")
 
 if clicked:
-    st.switch_page("pages/chatbot.py")
+    st.session_state.chat_open = not st.session_state.chat_open
 
+def richiesta(domanda, df):
+    q = domanda.lower()
+
+    anno = None
+    for y in range(1986, 2016):
+        if str(y) in q:
+            anno = y
 
