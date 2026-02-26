@@ -49,7 +49,7 @@ chart = (
     alt.Chart(df_chart)
     .mark_line()
     .encode(
-        x=alt.X("year:N", title="Year"),
+        x=alt.X("year:O", title="Year"),
         y=alt.Y("gross:Q", title="Gross earnings ($)"),
         color="genre:N",
     )
@@ -69,6 +69,8 @@ st.write(
 st.divider()
 st.subheader("🔮 Previsione Trend Futuri (2025-2030)")
 
+years_viz = st.slider("Seleziona anni da visualizzare nel grafico", 1986, 2030, (1995, 2030))
+
 seleziona_tutto = st.checkbox("Seleziona tutti i generi per la previsione")
 opzioni_disponibili = df.genre.unique()
 
@@ -85,11 +87,10 @@ else:
         default=["Action", "Adventure"] # Default standard se la checkbox è falsa
     )
 
-years_prediction = st.slider("Years_prediction", 1986, 2030, (2000, 2030))
+df_prevision = df[(df["genre"].isin(genres_prediction))]
 
-df_prevision = df[(df["genre"].isin(genres_prediction)) & (df["year"].between(years_prediction[0], years_prediction[1]))]
 if not df_prevision.empty:
-    future_years = np.array(range(2016, 2031)).reshape(-1, 1)
+    future_years = np.array(range(2017, 2030)).reshape(-1, 1)
     prediction_list = []
 
     for genre in genres_prediction:
@@ -116,18 +117,15 @@ if not df_prevision.empty:
     df_historical['type'] = 'Storico'
     
     df_predictions = pd.DataFrame(prediction_list)
-    df_final = pd.concat([df_historical, df_predictions])
+    df_all_data = pd.concat([df_historical, df_predictions])
 
-    # 3. Visualizzazione Grafica con Altair
-    # Usiamo il tratteggio per distinguere le previsioni
-    
-    
+    df_final = df_all_data[df_all_data["year"].between(years_viz[0], years_viz[1])]
     
     forecast_chart = (
         alt.Chart(df_final)
         .mark_line()
         .encode(
-            x=alt.X("year:N", title="Anno"),
+            x=alt.X("year:O", title="Anno"),
             y=alt.Y("gross:Q", title="Incassi Stimati ($)"),
             color="genre:N",
             strokeDash=alt.condition(
