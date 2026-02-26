@@ -155,6 +155,64 @@ if not df_prevision.empty:
 else:
     st.info("Seleziona i generi e l'intervallo temporale per generare la proiezione dal 2017 in poi.")
 
-st.write(
-    """ Predizione degli incassi per ogni genere"""
-)
+
+if "chat_open" not in st.session_state:
+    st.session_state.chat_open = False
+
+
+st.markdown("""
+<style>
+.red-round-btn {
+    background-color: #d62828;
+    color: white;
+    width: 55px;
+    height: 55px;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.25s;
+}
+.red-round-btn:hover {
+    background-color: #b71c1c;
+}
+</style>
+""", unsafe_allow_html=True)
+
+clicked = st.button("🤖", key="robot_btn")
+
+if clicked:
+    st.session_state.chat_open = not st.session_state.chat_open
+
+def richiesta(domanda, df):
+    q = domanda.lower()
+
+    anno = None
+    for y in range(1986, 2016):
+        if str(y) in q:
+            anno = y
+            break
+
+    if "genere" in q and ("più visto" in q or "più guardato" in q or "popolare" in q):
+        if anno is None:
+            return "Dimmi anche l'anno, così posso cercare il genere più guardato."
+        
+        df_year = df[df["year"] == anno]
+        if df_year.empty:
+            return f"Non ho dati per l'anno {anno}."
+
+        top_genre = df_year.groupby("genre")["views"].sum().idxmax()
+        return f"Nel {anno}, il genere più guardato è stato: **{top_genre}**."
+
+    return "Non ho capito la domanda, prova a riformularla."
+
+
+if st.session_state.chat_open:
+    st.subheader("Chatbot")
+    user_msg = st.text_input("Fai una domanda sul dataset:")
+    if user_msg:
+        st.write(answer_question(user_msg, df))    
+
