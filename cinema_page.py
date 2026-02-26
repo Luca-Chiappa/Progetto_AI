@@ -4,30 +4,11 @@ import streamlit as st
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
-st.set_page_config(page_title="DatasetView", page_icon="🎬")
-st.title("🎬 DatasetView 📗" )
-
-#selezione del dataset da visualizzare
-@st.cache_data
-def load_data(tipo_dataset):
-    if tipo_dataset == "🎬 Film":
-        return pd.read_csv("data/movies_genres_summary.csv")
-    else:
-        return pd.read_csv("data/books_genres_summary.csv") 
-
-
-st.sidebar.title("Impostazioni")
-modalita = st.sidebar.radio(
-    "Seleziona il Dataset:",
-    ["🎬 Film", "📚 Libri"],
-    help="Passa dall'analisi del cinema a quella dell'editoria"
+@st.write(
+    """
+    Quest'app analizza i dati storici degli incassi e delle valutazione di ogni genere di {modalita}]
+    """
 )
-
-df = load_data(modalita)
-
-st.title(f"{modalita} analisi dati")
-
-
 
 # PRIMA PARTE - ANALISI DEI DATI
 @st.cache_data
@@ -173,4 +154,3 @@ if not df_prevision.empty:
         
 else:
     st.info("Seleziona i generi e l'intervallo temporale per generare la proiezione dal 2017 in poi.")
-
