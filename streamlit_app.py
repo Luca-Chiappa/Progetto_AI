@@ -194,4 +194,25 @@ def richiesta(domanda, df):
     for y in range(1986, 2016):
         if str(y) in q:
             anno = y
+            break
+
+    if "genere" in q and ("più visto" in q or "più guardato" in q or "popolare" in q):
+        if anno is None:
+            return "Dimmi anche l'anno, così posso cercare il genere più guardato."
+        
+        df_year = df[df["year"] == anno]
+        if df_year.empty:
+            return f"Non ho dati per l'anno {anno}."
+
+        top_genre = df_year.groupby("genre")["views"].sum().idxmax()
+        return f"Nel {anno}, il genere più guardato è stato: **{top_genre}**."
+
+    return "Non ho capito la domanda, prova a riformularla."
+
+
+if st.session_state.chat_open:
+    st.subheader("Chatbot")
+    user_msg = st.text_input("Fai una domanda sul dataset:")
+    if user_msg:
+        st.write(answer_question(user_msg, df))    
 
