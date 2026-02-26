@@ -4,8 +4,30 @@ import streamlit as st
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
-st.set_page_config(page_title="Movies dataset", page_icon="🎬")
-st.title("🎬 Movies dataset")
+st.set_page_config(page_title="DatasetView", page_icon="🎬")
+st.title("🎬 DatasetView 📗" )
+
+#selezione del dataset da visualizzare
+@st.cache_data
+def load_data(tipo_dataset):
+    if tipo_dataset == "🎬 Film":
+        df = pd.read_csv("https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata")
+    else:
+        df = pd.read_csv("https://www.kaggle.com/datasets/zygmunt/goodbooks-10k/data?select=books.csv") 
+    return df
+
+st.sidebar.title("Impostazioni")
+modalita = st.sidebar.radio(
+    "Seleziona il Dataset:",
+    ["🎬 Film", "📚 Libri"],
+    help="Passa dall'analisi del cinema a quella dell'editoria"
+)
+
+# Carichiamo i dati in base alla scelta
+df = load_data(modalita)
+
+# Cambiamo il titolo dinamicamente
+st.title(f"{modalita} Dataset Analysis")
 st.write(
     """
     This app visualizes data from [The Movie Database (TMDB)](https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata).
