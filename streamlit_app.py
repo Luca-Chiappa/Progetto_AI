@@ -155,6 +155,32 @@ if not df_prevision.empty:
 else:
     st.info("Seleziona i generi e l'intervallo temporale per generare la proiezione dal 2017 in poi.")
 
-st.write(
-    """ Predizione degli incassi per ogni genere"""
-)
+
+st.markdown("""
+<style>
+.red-round-btn {
+    background-color: #d62828;
+    color: white;
+    width: 55px;
+    height: 55px;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.25s;
+}
+.red-round-btn:hover {
+    background-color: #b71c1c;
+}
+</style>
+""", unsafe_allow_html=True)
+
+clicked = st.button("🤖", key="robot_btn")
+
+if clicked:
+    st.switch_page("pages/chatbot.py")
+
+
