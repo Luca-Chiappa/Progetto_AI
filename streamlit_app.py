@@ -145,3 +145,7 @@ if not df_filtered.empty:
             st.dataframe(df_predictions.pivot(index='year', columns='genre', values='gross'))
 else:
     st.info("Seleziona i generi e l'intervallo temporale per generare la proiezione dal 2017 in poi.")
+
+st.write(
+    """ Predizione degli incassi per ogni genere"""
+)
