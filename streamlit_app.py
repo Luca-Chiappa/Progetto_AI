@@ -14,43 +14,34 @@ st.write(
     """
 )
 
-
-# Load the data from a CSV. We're caching this so it doesn't reload every time the app
-# reruns (e.g. if the user interacts with the widgets).
+# PRIMA PARTE - ANALISI DEI DATI
 @st.cache_data
 def load_data():
     df = pd.read_csv("data/movies_genres_summary.csv")
     return df
 
-
 df = load_data()
 
-# Show a multiselect widget with the genres using `st.multiselect`.
 genres = st.multiselect(
     "Genres",
     df.genre.unique(),
     ["Action", "Adventure", "Biography", "Comedy", "Drama", "Horror"],
 )
 
-# Show a slider widget with the years using `st.slider`.
 years = st.slider("Years", 1986, 2006, (2000, 2016))
 
-# Filter the dataframe based on the widget input and reshape it.
 df_filtered = df[(df["genre"].isin(genres)) & (df["year"].between(years[0], years[1]))]
 df_reshaped = df_filtered.pivot_table(
     index="year", columns="genre", values="gross", aggfunc="sum", fill_value=0
 )
 df_reshaped = df_reshaped.sort_values(by="year", ascending=False)
 
-
-# Display the data as a table using `st.dataframe`.
 st.dataframe(
     df_reshaped,
     use_container_width=True,
     column_config={"year": st.column_config.TextColumn("Year")},
 )
 
-# Display the data as an Altair chart using `st.altair_chart`.
 df_chart = pd.melt(
     df_reshaped.reset_index(), id_vars="year", var_name="genre", value_name="gross"
 )
@@ -58,7 +49,7 @@ chart = (
     alt.Chart(df_chart)
     .mark_line()
     .encode(
-        x=alt.X("year:N", title="Year"),
+        x=alt.X("year:O", title="Year"),
         y=alt.Y("gross:Q", title="Gross earnings ($)"),
         color="genre:N",
     )
@@ -74,13 +65,32 @@ st.write(
 )
 
 
+# SECONDA PARTE - PREVISIONE
 st.divider()
 st.subheader("🔮 Previsione Trend Futuri (2017 - 2030)")
 
-# 1. Definiamo l'intervallo futuro (dal 2017 al 2030)
-future_years = np.array(range(2017, 2031)).reshape(-1, 1)
+years_viz = st.slider("Seleziona anni da visualizzare nel grafico", 1986, 2030, (1995, 2030))
 
-if not df_filtered.empty:
+seleziona_tutto = st.checkbox("Seleziona tutti i generi per la previsione")
+opzioni_disponibili = df.genre.unique()
+
+if seleziona_tutto:
+    genres_prediction = st.multiselect(
+        "Scegli i generi per la previsione",
+        opzioni_disponibili,
+        default=opzioni_disponibili 
+    )
+else:
+    genres_prediction = st.multiselect(
+        "Scegli i generi per la previsione",
+        opzioni_disponibili,
+        default=["Action", "Adventure"] # Default standard se la checkbox è falsa
+    )
+
+df_prevision = df[(df["genre"].isin(genres_prediction))]
+
+if not df_prevision.empty:
+    future_years = np.array(range(2017, 2030)).reshape(-1, 1)
     prediction_list = []
 
     for genre in genres:
@@ -108,17 +118,16 @@ if not df_filtered.empty:
     df_historical['type'] = 'Storico'
     
     df_predictions = pd.DataFrame(prediction_list)
-    
-    # Uniamo passato e futuro
-    df_final = pd.concat([df_historical, df_predictions]).sort_values('year')
+    df_all_data = pd.concat([df_historical, df_predictions])
 
-    # 3. Creazione del Grafico Altair
+    df_final = df_all_data[df_all_data["year"].between(years_viz[0], years_viz[1])]
+    
     forecast_chart = (
         alt.Chart(df_final)
         .mark_line(point=True) # Aggiungiamo i punti per chiarezza
         .encode(
-            x=alt.X("year:O", title="Anno"), # :O tratta l'anno come ordinale (senza virgole)
-            y=alt.Y("gross:Q", title="Incassi ($)"),
+            x=alt.X("year:O", title="Anno"),
+            y=alt.Y("gross:Q", title="Incassi Stimati ($)"),
             color="genre:N",
             strokeDash=alt.condition(
                 alt.datum.type == 'Previsione', 
