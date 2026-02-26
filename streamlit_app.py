@@ -93,12 +93,11 @@ genres = st.multiselect(
 years = st.slider("Years", 1986, 2006, (2000, 2016))
 
 df_filtered = df[(df["genre"].isin(genres)) & (df["year"].between(years[0], years[1]))]
-df_reshaped = df_filtered.pivot_table(
-    index="year", columns="genre", values="gross", aggfunc="sum", fill_value=0
-)
-df_reshaped = df_reshaped.sort_values(by="year", ascending=False)
-
-st.dataframe(
+with st.expander("Vedi i dati grezzi"):
+    df_reshaped = df_filtered.pivot_table(
+        index="year", columns="genre", values="gross", aggfunc="sum", fill_value=0
+    ).sort_values(by="year", ascending=False)
+    st.dataframe(
     df_reshaped,
     use_container_width=True,
     column_config={"year": st.column_config.TextColumn("Year")},
