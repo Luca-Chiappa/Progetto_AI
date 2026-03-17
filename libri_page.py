@@ -4,10 +4,42 @@ import streamlit as st
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
+book_genres = [
+    "Adventure",
+    "Autobiography",
+    "Biography",
+    "Children",
+    "Classic",
+    "Comedy",
+    "Drama", 
+    "Dystopian",  
+    "Epic",
+    "Experimental",
+    "Fantasy",
+    "Fiction",
+    "Finance",
+    "Historical",
+    "Horror",
+    "Magic Realism",
+    "Mystery",
+    "Mythology",
+    "Non-fiction",
+    "Philosophical",
+    "Poetry",
+    "Post-apocalyptic",
+    "Psychological",
+    "Romance",
+    "Satire",
+    "Sci-Fi",
+    "Self-help",
+    "Short Story",
+    "Thriller"
+]
+
 def show_libri():
     st.write(
         """
-        Quest'app analizza i dati storici degli incassi e delle valutazione di ogni genere di {modalita}]
+        Quest'app analizza i dati storici degli incassi e delle valutazione di ogni genere di libri]
         """
     )
 
@@ -42,11 +74,12 @@ def show_libri():
     df_chart = pd.melt(
         df_reshaped.reset_index(), id_vars="year", var_name="genre", value_name="gross"
     )
+    df_chart = df_chart.sort_values(by="year")
     chart = (
         alt.Chart(df_chart)
-        .mark_line()
+        .mark_line(point=True)
         .encode(
-            x=alt.X("year:O", title="Year"),
+            x=alt.X("year:O", title="Year",axis=alt.Axis(format="d")),
             y=alt.Y("gross:Q", title="Gross earnings ($)"),
             color="genre:N",
         )
@@ -81,7 +114,7 @@ def show_libri():
         genres_prediction = st.multiselect(
             "Scegli i generi per la previsione",
             opzioni_disponibili,
-            default=["Action", "Adventure"] # Default standard se la checkbox è falsa
+            default=["Thriller", "Classic"] # Default standard se la checkbox è falsa
         )
 
     df_prevision = df[(df["genre"].isin(genres_prediction))]
@@ -112,6 +145,15 @@ def show_libri():
                                             "genre": genre, 
                                             "gross": max(0, p), 
                                             "type": "Previsione"})
+            
+            elif len(genre_data) == 1:
+                # Se c'è solo un anno, proiettiamo quel valore costante nel futuro
+                valore_fisso = genre_data['gross'].values[0]
+                for yr in future_years.flatten():
+                    prediction_list.append({
+                        "year": int(yr), "genre": genre, 
+                        "gross": valore_fisso, "type": "Previsione"
+                    })
 
         # 2. Prepariamo i dati per il grafico unico
         df_historical = df_prevision[['year', 'genre', 'gross']].copy()

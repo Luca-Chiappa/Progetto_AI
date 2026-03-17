@@ -7,7 +7,7 @@ import numpy as np
 def show_cinema():
     st.write(
         """
-        Quest'app analizza i dati storici degli incassi e delle valutazione di ogni genere di {modalita}]
+        Quest'app analizza i dati storici degli incassi e delle valutazione di ogni genere di film]
         """
     )
 
